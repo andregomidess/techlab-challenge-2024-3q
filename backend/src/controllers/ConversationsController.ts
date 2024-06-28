@@ -4,6 +4,8 @@ import { Conversation } from "../entities/Conversation.js";
 import { database } from "../services/database.js";
 import { ConversationMessage, ConversationMessageBy } from "../entities/ConversationMessage.js";
 import { User } from "../entities/User.js";
+import { isNull } from "util";
+import { Equal } from "typeorm";
 
 export class ConversationsController {
   protected get repository() {
@@ -14,11 +16,15 @@ export class ConversationsController {
    * GET /conversations
    */
   public async find(req: Request, res: Response) {
+    const userId = req.token.sub.split(':')[1];
     const [conversations, count] = await this.repository.findAndCount({
+      where: [
+        { user: {id: userId} },
+      ],
       relations: { consumer: true },
       take: 25,
       skip: 0
-    })
+    });
 
     res.json({ count, conversations })
   }

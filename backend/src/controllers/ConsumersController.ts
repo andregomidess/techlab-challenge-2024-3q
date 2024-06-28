@@ -6,11 +6,12 @@ import jwt from 'jsonwebtoken'
 import { APP_NAME, SECRET } from "../constants/env.js";
 import { FindOptionsWhere } from "typeorm";
 import { ConversationMessage, ConversationMessageBy } from "../entities/ConversationMessage.js";
+import { User } from "../entities/User.js";
+import { findAttendantWithLeastConversations } from "../utils/findAttendantWithLeastConversations.js";
 export class ConsumersController {
   protected get repository() {
     return database.getRepository(Consumer)
   }
-
   /**
    * GET /consumers
    */
@@ -148,8 +149,15 @@ export class ConsumersController {
 
     const messages: Record<string, unknown>[] = Array.isArray(req.body?.messages) ? req.body.messages : []
 
+    const selectedAttendant = await findAttendantWithLeastConversations();
+
+    if (!selectedAttendant) {
+      return res.status(500).json({ message: 'No attendants available' });
+    }
+
     const conversation = await database.getRepository(Conversation).save({
       consumer,
+      user: selectedAttendant,
       messages: messages.map((message, index) => {
         if (typeof message !== 'object') throw new Error('Bad Request: messages must be an array of objects')
 
