@@ -35,8 +35,28 @@ export class UsersController {
   /**
    * PUT /users
    */
-  public async save(req: Request, res: Response) {
+  public async save(req: Request<{username: string, email: string, password: string}>, res: Response) {
+
+    if (!req.body.username) {
+      return res.status(500).json({ message: `username is missing` })
+    }
+
+    if (!req.body.email) {
+      return res.status(500).json({ message: `email is missing` })
+    }
+
+    if (!req.body.password) {
+      return res.status(500).json({ message: `password is missing` })
+    }
+
+    const emailExist = await this.repository.findOne({where: req.body.email})
+
+    if (emailExist){
+      return res.status(500).json({ message: `Email addres already used.` })
+    }
+
     const user = await this.repository.save(req.body)
+
 
     res.status(201)
       .header('Location', `/users/${user.id}`)

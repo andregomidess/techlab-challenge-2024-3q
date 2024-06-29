@@ -8,6 +8,9 @@ import cors from 'cors'
 import { ConversationsController } from './controllers/ConversationsController.js'
 import { ConsumersController } from './controllers/ConsumersController.js'
 import { logger } from './middlewares/logger.js'
+import { profiles } from './constants/profiles.js'
+import { registerUserValidator } from './validators/registerUserValidator.js'
+import { celebrate } from 'celebrate'
 
 export const app = Express()
 
@@ -99,6 +102,14 @@ app.get(
   _catch((req, res) => singleton(UsersController).find(req, res))
 )
 
+app.post(
+  '/users',
+  scope('users:*', 'users:create'),
+  celebrate(registerUserValidator),
+  _catch((req, res) => singleton(UsersController).save(req, res))
+);
+
+
 app.put(
   '/users',
   scope('users:*', 'users:write', req => req.body?.id && [`users:${req.body.id}:*`, `users:${req.body.id}:write`]),
@@ -112,6 +123,7 @@ app.get(
     singleton(UsersController).findOne(req, res)
   )
 )
+
 
 app.patch(
   '/users/:userId',

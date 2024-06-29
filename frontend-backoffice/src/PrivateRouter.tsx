@@ -4,6 +4,7 @@ import { Dashboard } from "./components/Dashboard.js";
 import { UsersScreen } from "./screens/UsersScreen.js";
 import { ConversationScreen } from "./screens/ConversationScreen.js";
 import { UserScreen } from "./screens/UserScreen.js";
+import { NewUserScreen } from "./screens/NewUserScreen.js";
 
 const router = createBrowserRouter([
   {
@@ -23,6 +24,7 @@ const router = createBrowserRouter([
       },
       { path: '/users', element: <UsersScreen /> },
       { path: '/users/:userId', element: <UserScreen /> },
+      { path: '/new-user', element: <NewUserScreen/> },
     ]
   },
 ])
