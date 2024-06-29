@@ -25,11 +25,11 @@ export interface IAuthenticationContext {
 export const AuthenticationContext = createContext(null as unknown as IAuthenticationContext)
 
 export function AuthenticationProvider({ children }: PropsWithChildren) {
-  const [accessToken, setAccessToken] = useState<string | null>(null)
+  const [accessToken, setAccessToken] = useState<string | null>(() => localStorage.getItem('token'))
   const signIn = useMutation({
     mutationFn: async ({ username, password }: IAuthenticationSignInPayload) => {
       const response = await api.post('/auth/sign-in', { username, password })
-
+      localStorage.setItem('token', response.data.access_token)
       setAccessToken(response.data.access_token)
     },
   })
