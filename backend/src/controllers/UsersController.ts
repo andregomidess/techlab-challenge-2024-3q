@@ -1,11 +1,18 @@
 import { Request, Response } from "express";
 import { User } from "../entities/User.js";
 import { database } from "../services/database.js";
+import { IHashprovider } from "../providers/models/IHashProvider.js";
+import { BcryptHashProvider } from "../providers/implementation/BcryptHashProvider.js";
 
 export class UsersController {
   protected get repository() {
     return database.getRepository(User)
   }
+
+  protected get hashProvider() {
+    return new BcryptHashProvider();
+  }
+
 
   /**
    * GET /users
@@ -35,27 +42,47 @@ export class UsersController {
   /**
    * PUT /users
    */
-  public async save(req: Request<{username: string, email: string, password: string}>, res: Response) {
+  public async save(req: Request<{username: string, email: string, password: string, profile: string}>, res: Response) {
 
-    if (!req.body.username) {
+    if (!req.body.username ||req.body.username === '') {
       return res.status(500).json({ message: `username is missing` })
     }
 
-    if (!req.body.email) {
+    if (!req.body.email ||req.body.email === '') {
       return res.status(500).json({ message: `email is missing` })
     }
 
-    if (!req.body.password) {
+    if (!req.body.password ||req.body.password === '') {
       return res.status(500).json({ message: `password is missing` })
     }
 
-    const emailExist = await this.repository.findOne({where: req.body.email})
+    if (!req.body.profile ||req.body.profile === '') {
+      return res.status(500).json({ message: `profile is missing` })
+    }
+
+    const emailExist = await this.repository.findOne({where: {email: req.body.email}})
 
     if (emailExist){
       return res.status(500).json({ message: `Email addres already used.` })
     }
+    
+    const usernameExist = await this.repository.findOne({ where: {username: req.body.username} })
+    
+    if (usernameExist){
+      return res.status(500).json({ message: `Username already used.` })
+    }
+    console.log(req.body)
 
-    const user = await this.repository.save(req.body)
+    const hashedPassword = await this.hashProvider.generateHash(req.body.password)
+    
+    const newUser = {
+      username: req.body.username,
+      email: req.body.email,
+      profile: req.body.profile,
+      password: hashedPassword
+    }
+
+    const user = await this.repository.save(newUser)
 
 
     res.status(201)

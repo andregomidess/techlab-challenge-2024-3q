@@ -4,6 +4,7 @@ export interface IUser {
   email: string
   profile: string
   password: string
+  confirmPassword?: string
   createdAt: string
   updatedAt: string
 }
