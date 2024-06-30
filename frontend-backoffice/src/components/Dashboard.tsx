@@ -4,10 +4,16 @@ import { useHasScope } from "../hooks/useAuthenticationContext.js";
 import PeopleIcon from '@mui/icons-material/People'
 import AddIcon from '@mui/icons-material/Add';
 import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
+import { useAppThemeContext } from "../contexts/ThemeContext.js";
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
 
 const drawerWidth = 240;
 
 export function Dashboard() {
+
+  const { toggleTheme, themeName } = useAppThemeContext();
+  
   return (
     <Box sx={{ display: 'flex' }}>
       <Box
@@ -59,6 +65,16 @@ export function Dashboard() {
                   </Link>
                 </>
               )}
+              <Box>
+                <List component="nav">
+                  <ListItemButton onClick={toggleTheme}>
+                    <ListItemIcon>
+                      {themeName === 'light' ? <LightModeIcon /> : <DarkModeIcon />}
+                    </ListItemIcon>
+                    <ListItemText primary="Alternar tema" />
+                  </ListItemButton>
+                </List>
+              </Box>
             </List>
             <Divider />
           </div>

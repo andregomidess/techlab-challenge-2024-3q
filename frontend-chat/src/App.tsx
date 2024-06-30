@@ -9,18 +9,19 @@ import { CssBaseline } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthenticationProvider } from './contexts/AuthenticationProvider.jsx';
 import { Chat } from './components/Chat.js';
+import { AppThemeProvider } from './contexts/ThemeContext.js';
 
 const queryClient = new QueryClient()
 
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={defaultTheme}>
+      <AppThemeProvider>
         <CssBaseline />
         <AuthenticationProvider>
           <Chat />
         </AuthenticationProvider>
-      </ThemeProvider>
+      </AppThemeProvider>
     </QueryClientProvider>
   )
 }

@@ -2,12 +2,14 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "r
 import { AuthenticationContext } from "../contexts/AuthenticationProvider";
 import { IConversation } from "../interfaces/IConversation";
 import { LoadingButton } from "@mui/lab";
-import { Box, Typography, List, ListItem, Grid, TextField } from "@mui/material";
+import { Box, Typography, List, ListItem, Grid, TextField, Switch, FormControlLabel } from "@mui/material";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "../services/api";
 import { IConversationMessage } from "../interfaces/IConversationMessage";
 import { useForm } from "react-hook-form";
 import SendIcon from '@mui/icons-material/Send';
+import { MaterialUISwitch } from "./MaterialUISwitch";
+import { useAppThemeContext } from "../contexts/ThemeContext";
 
 export interface TemporaryConversationMessage {
   id: string
@@ -22,6 +24,8 @@ export interface IConversationMessageInput {
 
 export function Chat() {
   const scrollRef = useRef<HTMLElement>(null)
+
+  const { toggleTheme, theme } = useAppThemeContext();
 
   const { consumer, isLoading, accessToken, signIn } = useContext(AuthenticationContext)
 
@@ -169,7 +173,12 @@ export function Chat() {
 
   return (
     <Box display='flex' flexDirection='column' height='100vh' py={2}>
-      <Box>
+      <Box display={'flex'} justifyContent={'end'}>
+        <FormControlLabel
+          control={<MaterialUISwitch sx={{ m: 1 }} theme={theme} />}
+          onChange={toggleTheme}
+          label="Alterar tema"
+        />
       </Box>
       <Box maxHeight='80%' overflow='hidden scroll' ref={scrollRef}>
         <List>
