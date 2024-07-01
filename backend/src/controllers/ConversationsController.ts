@@ -90,7 +90,7 @@ export class ConversationsController {
   /**
    * POST /conversations/:conversation-id/messages
    */
-  public async addMessage(req: Request<{ conversationId: string }>, res: Response) {
+ public async addMessage(req: Request<{ conversationId: string }>, res: Response) {
     const conversation = await this.repository.findOne({
       relations: { consumer: true },
       where: { id: req.params.conversationId }
@@ -175,6 +175,9 @@ export class ConversationsController {
         by: req.body.by,
       }),
     )
+
+    // Emitir o evento de nova mensagem para todos os clientes conectados à conversa
+    // io.to(req.params.conversationId).emit('newMessage', message)
 
     res.json(message)
   }

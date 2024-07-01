@@ -18,7 +18,7 @@ export function scope(...oneOf: [Scope, ...Scope[]]) {
       SECRET,
       { audience: APP_NAME, issuer: APP_NAME },
       (err, payload) => {
-        if (err) return next(new Error('Unauthorized'))
+        if (err) return res.status(401).json({ error: 'Unauthorized' });
 
         if (typeof payload !== 'object') return next(new Error('Forbidden'))
 

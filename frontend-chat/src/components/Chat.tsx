@@ -10,6 +10,7 @@ import { useForm } from "react-hook-form";
 import SendIcon from '@mui/icons-material/Send';
 import { MaterialUISwitch } from "./MaterialUISwitch";
 import { useAppThemeContext } from "../contexts/ThemeContext";
+import { Socket, io } from 'socket.io-client'; // Importe o cliente Socket.IO
 
 export interface TemporaryConversationMessage {
   id: string
@@ -28,6 +29,10 @@ export function Chat() {
   const { toggleTheme, theme } = useAppThemeContext();
 
   const { consumer, isLoading, accessToken, signIn } = useContext(AuthenticationContext)
+
+  const [temporaryConversationMessages, setTemporaryConversationMessages] = useState<TemporaryConversationMessage[]>([])
+
+  const socket = useRef<Socket | null>(null);
 
   const conversationQuery = useQuery({
     queryKey: ['conversations', consumer?.id],
@@ -61,8 +66,6 @@ export function Chat() {
     refetchInterval: 20 * 1000
   })
 
-  const [temporaryConversationMessages, setTemporaryConversationMessages] = useState<TemporaryConversationMessage[]>([])
-
   const pushTemporaryConversationMessage = useCallback((message: Omit<TemporaryConversationMessage, 'id' | 'createdAt'>) => {
     setTemporaryConversationMessages((messages) => [
       ...messages,
@@ -74,7 +77,7 @@ export function Chat() {
     ...messagesQuery.data?.messages ?? [],
     ...temporaryConversationMessages
   ].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
-  [temporaryConversationMessages, messagesQuery.data?.messages])
+    [temporaryConversationMessages, messagesQuery.data?.messages])
 
   const documentQuestionOpen = useRef(false)
   const subjectQuestionOpen = useRef(false)
@@ -112,16 +115,22 @@ export function Chat() {
 
       if (!conversation) return void 0
 
-      else await api.post(
-        `/conversations/${conversation.id}/messages`,
-        { content: conversationMessageInput.content },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      )
+      else {
+        const response = await api.post(
+          `/conversations/${conversation.id}/messages`,
+          { content: conversationMessageInput.content },
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        )
+
+        const newMessage = response.data;
+        socket.current.emit('sendMessage', newMessage); // Emita o evento de nova mensagem
+      }
 
       messagesQuery.refetch()
     },
     onSuccess: () => messagesQuery.refetch()
   })
+
 
   const form = useForm({
     defaultValues: { content: '' },
@@ -164,12 +173,30 @@ export function Chat() {
   useEffect(() => {
     if (conversationQuery.isLoading) return;
 
-    if (conversation !== null) return;7
-    
+    if (conversation !== null) return;
+
     pushTemporaryConversationMessage({ by: 'system', content: 'Qual o assunto do atendimento?' })
 
     subjectQuestionOpen.current = true
   }, [conversationQuery.isLoading, conversation])
+
+  useEffect(() => {
+    if (socket.current) return;
+
+   
+
+    if (conversation) {
+      socket.current.emit('joinConversation', conversation.id);
+
+      socket.current.on('newMessage', (message: any) => {
+        setTemporaryConversationMessages((prevMessages) => [...prevMessages, message]);
+      });
+    }
+
+    return () => {
+      socket.current.disconnect();
+    };
+  }, [conversation]);
 
   return (
     <Box display='flex' flexDirection='column' height='100vh' py={2}>
@@ -185,7 +212,7 @@ export function Chat() {
           {messages.map((message) => (
             <ListItem key={`messages:${message.id}`}>
               <Typography variant='body1'>{message.content}</Typography>
-              <span style={{ width: 5 }}/>
+              <span style={{ width: 5 }} />
               <Typography variant='overline'>- {new Date(message.createdAt).toLocaleString()}</Typography>
             </ListItem>
           ))}
@@ -194,7 +221,7 @@ export function Chat() {
       <Box mt='auto' px={4}>
         <Grid container spacing={2}>
           <Grid item sm={11}>
-            <TextField {...form.register('content')} multiline fullWidth onSubmit={submit} onKeyUp={handleKeyPress}/>
+            <TextField {...form.register('content')} multiline fullWidth onSubmit={submit} onKeyUp={handleKeyPress} />
           </Grid>
           <Grid item sm={1} mt='auto'>
             <LoadingButton loading={send.isPending} variant="contained" style={{ padding: 16 }} startIcon={<SendIcon />} onClick={submit}>

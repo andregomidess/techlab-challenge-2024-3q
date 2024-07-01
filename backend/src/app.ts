@@ -11,12 +11,28 @@ import { logger } from './middlewares/logger.js'
 import { profiles } from './constants/profiles.js'
 import { registerUserValidator } from './validators/registerUserValidator.js'
 import { celebrate } from 'celebrate'
+import { createServer } from 'http'
+import { Server } from 'socket.io'
 
 export const app = Express()
+app.use(Express.json())
+
+const httpServer = createServer(app);
+
+const ws = new Server(httpServer,{
+  cors: {
+    origin: "*",
+  },
+});
+
+ws.on("connection", (socket: any) => { 
+  console.log('loguei aqui', socket)
+})
+
+
 
 app.use(logger)
 app.use(cors())
-app.use(Express.json())
 
 app.post(
   '/auth/sign-in',
