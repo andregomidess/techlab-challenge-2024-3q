@@ -17,19 +17,30 @@ import { Server } from 'socket.io'
 export const app = Express()
 app.use(Express.json())
 
-const httpServer = createServer(app);
+export const httpServer = createServer(app);
 
-const ws = new Server(httpServer,{
+export const io = new Server(httpServer,{
   cors: {
     origin: "*",
   },
 });
 
-ws.on("connection", (socket: any) => { 
-  console.log('loguei aqui', socket)
-})
+io.on('connection', (socket) => {
+  console.log('a user connected');
 
+  socket.on('joinConversation', (conversationId) => {
+    socket.join(conversationId);
+  });
 
+  socket.on('sendMessage', (message) => {
+    const conversationId = message.conversationId; // Ajuste conforme sua estrutura de mensagem
+    io.to(conversationId).emit('newMessage', message);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('user disconnected');
+  });
+});
 
 app.use(logger)
 app.use(cors())

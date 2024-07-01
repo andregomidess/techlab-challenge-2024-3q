@@ -1,65 +1,40 @@
-import { Box, Grid, List, ListItem, Skeleton, TextField, Typography } from "@mui/material";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { Box, Grid, List, ListItem, TextField, Typography } from "@mui/material";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { api } from "../services/api.js";
-import { IConversation } from "../interfaces/IConversation.js";
-import { IConversationMessage } from "../interfaces/IConversationMessage.js";
-import { useAccessToken } from "../hooks/useAuthenticationContext.js";
-import { useCallback, useEffect, useMemo, useRef } from "react";
-import { useForm } from "react-hook-form";
-import SendIcon from '@mui/icons-material/Send.js';
-import CloseIcon from '@mui/icons-material/Close.js';
+import { api } from "../services/api";
+import { IConversation } from "../interfaces/IConversation";
+import { IConversationMessage } from "../interfaces/IConversationMessage";
+import { useAccessToken } from "../hooks/useAuthenticationContext";
+import SendIcon from '@mui/icons-material/Send';
+import CloseIcon from '@mui/icons-material/Close';
 import { LoadingButton } from "@mui/lab";
+import { Socket, io } from 'socket.io-client';
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
 
 interface IConversationMessageInput {
   content: string
 }
 
 export function ConversationScreen() {
-  const params = useParams()
-  const conversationId = params.conversationId
-  const scrollRef = useRef<HTMLElement>(null)
+  const params = useParams();
+  const conversationId = params.conversationId;
+  const scrollRef = useRef<HTMLElement>(null);
+  const accessToken = useAccessToken();
+  const socket = useRef<Socket | null>(null);
+  const [messages, setMessages] = useState<IConversationMessage[]>([]);
 
-  if (!params.conversationId) throw new Error('No conversationId provided')
+  if (!params.conversationId) throw new Error('No conversationId provided');
 
-  const accessToken = useAccessToken()
-
-  const conversation = useQuery({
+  const conversationQuery = useQuery({
     queryKey: ['conversations', conversationId],
     queryFn: async () => {
       const response = await api.get(`/conversations/${conversationId}`, {
         headers: { Authorization: `Bearer ${accessToken}` }
-      })
-
-      return response.data as IConversation
+      });
+      return response.data as IConversation;
     }
-  })
-
-  const messagesQuery = useQuery({
-    queryKey: ['conversations', conversationId, 'messages'],
-    queryFn: async () => {
-      const response = await api.get(`/conversations/${conversationId}/messages`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      })
-
-      return response.data as {
-        count: number
-        messages: IConversationMessage[]
-      }
-    },
-    refetchInterval: 20 * 1000
-  })
-
-  const send = useMutation({
-    mutationFn: async (conversationMessageInput: IConversationMessageInput) => {
-      await api.post(
-        `/conversations/${conversationId}/messages`,
-        { content: conversationMessageInput.content },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      )
-    },
-    onSuccess: () => messagesQuery.refetch()
-  })
+  });
 
   const close = useMutation({
     mutationFn: async () => {
@@ -67,60 +42,91 @@ export function ConversationScreen() {
         `/conversations/${conversationId}`,
         { headers: { Authorization: `Bearer ${accessToken}` } }
       )
-    },
-    onSuccess: () => messagesQuery.refetch()
+    }
   })
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        const response = await api.get(`/conversations/${conversationId}/messages`, {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        setMessages(response.data.messages.reverse());
+      } catch (error) {
+        console.error('Failed to fetch messages:', error);
+      }
+    };
+
+    if (conversationQuery.isSuccess && conversationQuery.data) {
+      fetchMessages();
+    }
+  }, [accessToken, conversationId, conversationQuery.isSuccess, conversationQuery.data]);
 
   const form = useForm({
     defaultValues: { content: '' },
-  })
+  });
 
-  const handleSubmit = useCallback((message: IConversationMessageInput) => {
+  const handleSubmit = async (message: IConversationMessageInput) => {
     if (!message.content) return;
 
-    send.mutate(message, {
-      onSuccess: () => {
-        form.reset()
-      }
-    })
-  }, [send.mutate, form])
+    try {
+      await api.post(`/conversations/${conversationId}/messages`, { content: message.content }, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      form.reset();
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    }
+  };
 
-  const submit = form.handleSubmit(handleSubmit)
-
-  const handleKeyPress = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key !== 'Enter') return
-
-    if (event.shiftKey) return
-
-    event.stopPropagation()
-
-    submit(event)
-  }, [submit])
-
-  const messages = useMemo(() => {
-    return (messagesQuery.data?.messages ?? []).slice().sort((a, b) => {
-      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    })
-  }, [messagesQuery.data?.messages])
+  const handleKeyPress = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      handleSubmit({ content: form.getValues().content });
+    }
+  };
 
   useEffect(() => {
-    if (!scrollRef.current) return
+    if (!socket.current) {
+      socket.current = io('http://localhost:8080');
+    }
 
-    scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" })
-  }, [messages])
+    socket.current.emit('joinConversation', conversationId);
 
-  if (conversation.isLoading) return (
-    <Skeleton variant="rounded" width={210} height={60} />
-  )
+    socket.current.on('newMessage', (message: IConversationMessage) => {
+      setMessages(prevMessages => [...prevMessages, message]);
+    });
 
-  if (!conversation.data) throw new Error('Failed to laod conversation')
+    return () => {
+      if (socket.current) {
+        socket.current.disconnect();
+        socket.current = null;
+      }
+    };
+  }, [conversationId]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    }
+  }, [messages]);
+
+  if (conversationQuery.isLoading) {
+    return <Typography>Loading...</Typography>;
+  }
+
+  if (!conversationQuery.data) {
+    return <Typography>Error: Conversation not found.</Typography>;
+  }
+
+  const conversation = conversationQuery.data;
 
   return (
     <Box display='flex' flexDirection='column' height='100vh' py={2}>
       <Box>
-        <Typography variant='h5'>{conversation.data.subject}</Typography>
-        {conversation.data.consumer.name && <Typography variant='subtitle1'>{conversation.data.consumer.name}</Typography>}
-        <Typography variant='subtitle1'>{conversation.data.consumer.document}</Typography>
+        <Typography variant='h5'>{conversation.subject}</Typography>
+        {conversation.consumer.name && <Typography variant='subtitle1'>{conversation.consumer.name}</Typography>}
+        <Typography variant='subtitle1'>{conversation.consumer.document}</Typography>
       </Box>
       <Box maxHeight='80%' overflow='hidden scroll' ref={scrollRef}>
         <List>
@@ -136,20 +142,32 @@ export function ConversationScreen() {
       <Box mt='auto' px={4}>
         <Grid container spacing={2}>
           <Grid item sm={10}>
-            <TextField {...form.register('content')} multiline fullWidth onSubmit={submit} onKeyUp={handleKeyPress}/>
+            <TextField {...form.register('content')} multiline fullWidth onKeyUp={handleKeyPress} />
           </Grid>
           <Grid item sm={1} mt='auto'>
-            <LoadingButton loading={send.isPending} variant="contained" style={{ padding: 16 }} startIcon={<SendIcon />} onClick={submit}>
+            <LoadingButton
+              loading={false}
+              variant="contained"
+              style={{ padding: 16 }}
+              startIcon={<SendIcon />}
+              onClick={() => handleSubmit({ content: form.getValues().content })}
+            >
               Send
             </LoadingButton>
           </Grid>
           <Grid item sm={1} mt='auto'>
-            <LoadingButton loading={close.isPending} variant="contained" style={{ padding: 16 }} startIcon={<CloseIcon />} onClick={() => close.mutate()}>
+            <LoadingButton
+              loading={false}
+              variant="contained"
+              style={{ padding: 16 }}
+              startIcon={<CloseIcon />}
+              onClick={() => {close.mutate}}
+            >
               Close
             </LoadingButton>
           </Grid>
         </Grid>
       </Box>
     </Box>
-  )
+  );
 }
