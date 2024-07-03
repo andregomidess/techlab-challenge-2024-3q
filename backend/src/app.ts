@@ -13,6 +13,7 @@ import { registerUserValidator } from './validators/registerUserValidator.js'
 import { celebrate } from 'celebrate'
 import { createServer } from 'http'
 import { Server } from 'socket.io'
+import { updateUserValidator } from './validators/updateUservalidator.js'
 
 export const app = Express()
 app.use(Express.json())
@@ -155,6 +156,7 @@ app.get(
 app.patch(
   '/users/:userId',
   scope('users:*', 'users:write', req => [`users:${req.params.id}:*`, `users:${req.params.id}:write`]),
+  celebrate(updateUserValidator),
   _catch((req, res) =>
     singleton(UsersController).update(req, res)
   )
