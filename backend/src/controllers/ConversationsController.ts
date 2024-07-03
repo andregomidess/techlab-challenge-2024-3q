@@ -177,7 +177,6 @@ export class ConversationsController {
       }),
     )
 
-    // Emitir o evento de nova mensagem para todos os clientes conectados à conversa
     io.to(req.params.conversationId).emit('newMessage', message)
 
     res.json(message)

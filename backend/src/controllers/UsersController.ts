@@ -35,12 +35,14 @@ export class UsersController {
     })
     
     if (!user) return res.status(404).json({ message: `Not found User with ID ${req.params.userId}` })
+
+    const { password, ...userWithoutPassword } = user;
     
-    return res.json(user)
+    return res.json(userWithoutPassword)
   }
 
   /**
-   * PUT /users
+   * POST /users
    */
   public async save(req: Request<{username: string, email: string, password: string, profile: string}>, res: Response) {
 
@@ -63,15 +65,14 @@ export class UsersController {
     const emailExist = await this.repository.findOne({where: {email: req.body.email}})
 
     if (emailExist){
-      return res.status(500).json({ message: `Email addres already used.` })
+      return res.status(400).json({ message: `Email addres already used.` })
     }
     
     const usernameExist = await this.repository.findOne({ where: {username: req.body.username} })
     
     if (usernameExist){
-      return res.status(500).json({ message: `Username already used.` })
+      return res.status(400).json({ message: `Username already used.` })
     }
-    console.log(req.body)
 
     const hashedPassword = await this.hashProvider.generateHash(req.body.password)
     
@@ -99,6 +100,27 @@ export class UsersController {
     })
 
     if (!user) return res.status(404).json({ message: `Not found User with ID ${req.params.userId}` })
+
+    const emailExist = await this.repository.findOne({where: {email: req.body.email}})
+
+    if (emailExist && emailExist.email !== user.email){
+      return res.status(400).json({ message: `Email addres already used.` })
+    }
+    
+    const usernameExist = await this.repository.findOne({ where: {username: req.body.username} })
+    
+    if (usernameExist && usernameExist.username !== user.username){
+      return res.status(400).json({ message: `Username already used.` })
+    }
+
+    if (req.body.password) {
+      const { password, confirmPassword, ...rest } = req.body;
+      const hashedPassword = await this.hashProvider.generateHash(password);
+      req.body = {
+        ...rest,
+        password: hashedPassword,
+      };
+    }
 
     await this.repository.save(
       this.repository.merge(user, req.body)

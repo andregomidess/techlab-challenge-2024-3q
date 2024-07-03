@@ -137,11 +137,11 @@ app.post(
 );
 
 
-app.put(
-  '/users',
-  scope('users:*', 'users:write', req => req.body?.id && [`users:${req.body.id}:*`, `users:${req.body.id}:write`]),
-  _catch((req, res) => singleton(UsersController).save(req, res))
-)
+// app.put(
+//   '/users',
+//   scope('users:*', 'users:write', req => req.body?.id && [`users:${req.body.id}:*`, `users:${req.body.id}:write`]),
+//   _catch((req, res) => singleton(UsersController).save(req, res))
+// )
 
 app.get(
   '/users/:userId',
