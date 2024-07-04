@@ -41,7 +41,7 @@ export function AuthenticationProvider({ children }: PropsWithChildren) {
     queryKey: ['consumers', consumerId],
     queryFn: async () => {
       const response = await api.get(`/consumers/${consumerId}`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem('session:access-token')}` }
       })
 
       return response.data

@@ -24,7 +24,7 @@ export interface IConversationMessageInput {
 export function Chat() {
   const scrollRef = useRef<HTMLElement>(null);
 
-  const { consumer, isLoading, accessToken, signIn, refreshToken } = useContext(AuthenticationContext);
+  const { consumer, isLoading, accessToken, signIn } = useContext(AuthenticationContext);
 
   const socket = useRef<Socket | null>(null);
 
@@ -35,7 +35,7 @@ export function Chat() {
     queryKey: ['conversations', consumer?.id],
     queryFn: async () => {
       const response = await api.get(`/consumers/${consumer!.id}/conversations`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem('session:access-token')}` }
       });
       return (response.data.conversations[0] ?? null) as IConversation | null;
     },
@@ -48,7 +48,7 @@ export function Chat() {
     if (conversation) {
       (async () => {
         const response = await api.get(`/conversations/${conversation.id}/messages`, {
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${localStorage.getItem('session:access-token')}` }
         });
         setMessages(response.data.messages);
         setTemporaryConversationMessages([]);
@@ -90,7 +90,7 @@ export function Chat() {
             subject: conversationMessageInput.content,
             messages: [...temporaryConversationMessages, { by: 'consumer', content: conversationMessageInput.content, createdAt: new Date().toISOString() }]
           },
-          { headers: { Authorization: `Bearer ${accessToken}` } }
+          { headers: { Authorization: `Bearer ${localStorage.getItem('session:access-token')}` } }
         );
         subjectQuestionOpen.current = false;
         conversationQuery.refetch();
@@ -102,7 +102,7 @@ export function Chat() {
       await api.post(
         `/conversations/${conversation.id}/messages`,
         { content: conversationMessageInput.content },
-        { headers: { Authorization: `Bearer ${accessToken}` }
+        { headers: { Authorization: `Bearer ${localStorage.getItem('session:access-token')}` }
       });
 
     },

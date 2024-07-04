@@ -5,16 +5,16 @@ export const api = axios.create({
 });
 
 let isRefreshing = false;
-// let refreshSubscribers: ((token: string) => void)[] = [];
+let refreshSubscribers: ((token: string) => void)[] = [];
 
-// const subscribeTokenRefresh = (cb: (token: string) => void) => {
-//   refreshSubscribers.push(cb);
-// };
+const subscribeTokenRefresh = (cb: (token: string) => void) => {
+  refreshSubscribers.push(cb);
+};
 
-// const onRrefreshed = (token: string) => {
-//   refreshSubscribers.map((cb) => cb(token));
-//   refreshSubscribers = [];
-// };
+const onRrefreshed = (token: string) => {
+  refreshSubscribers.map((cb) => cb(token));
+  refreshSubscribers = [];
+};
 
 api.interceptors.response.use(
   response => response,
@@ -37,7 +37,7 @@ api.interceptors.response.use(
           localStorage.setItem('session:access-token', data.access_token);
 
           isRefreshing = false;
-          //onRrefreshed(data.access_token);
+          onRrefreshed(data.access_token);
         } catch (e) {
           localStorage.removeItem('session:access-token');
           localStorage.removeItem('session:refresh-token');
@@ -46,14 +46,15 @@ api.interceptors.response.use(
         }
       }
 
-      // const retryOriginalRequest = new Promise((resolve, reject) => {
-      //   subscribeTokenRefresh((token: string) => {
-      //     originalRequest.headers['Authorization'] = `Bearer ${token}`;
-      //     resolve(api(originalRequest));
-      //   });
-      // });
+      const retryOriginalRequest = new Promise((resolve, reject) => {
+        subscribeTokenRefresh((token: string) => {
+          console.log('Retrying original request with new access token:', token);
+          originalRequest.headers['Authorization'] = `Bearer ${token}`;
+          resolve(api(originalRequest));
+        });
+      });
 
-      //return retryOriginalRequest;
+      return retryOriginalRequest;
     }
 
     return Promise.reject(error);
