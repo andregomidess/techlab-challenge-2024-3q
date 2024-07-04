@@ -24,7 +24,7 @@ export interface IConversationMessageInput {
 export function Chat() {
   const scrollRef = useRef<HTMLElement>(null);
 
-  const { consumer, isLoading, accessToken, signIn } = useContext(AuthenticationContext);
+  const { consumer, isLoading, accessToken, signIn, refreshToken } = useContext(AuthenticationContext);
 
   const socket = useRef<Socket | null>(null);
 
@@ -80,6 +80,7 @@ export function Chat() {
         documentQuestionOpen.current = false;
         return;
       }
+
 
       if (subjectQuestionOpen.current) {
         pushTemporaryConversationMessage({ by: 'consumer', content: conversationMessageInput.content });

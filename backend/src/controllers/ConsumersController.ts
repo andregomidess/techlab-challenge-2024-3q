@@ -25,7 +25,7 @@ export class ConsumersController {
   }
 
   /**
-   * PUT /consumers/sign-in
+   * POST /consumers/sign-in
    */
   public async signIn(req: Request, res: Response) {
     if (typeof req.body != 'object') throw new Error('Bad Request: body must be an object')
@@ -47,20 +47,84 @@ export class ConsumersController {
         {
           audience: APP_NAME,
           issuer: APP_NAME,
-          expiresIn: '10m',
+          expiresIn: '1m',
           subject: `consumer:${consumer.id}`
         },
         (err, token) => {
           if (err) return reject(err)
-
           if (!token) return reject(new Error())
-
           resolve(token)
         }
       )
     })
 
-    res.json({ access_token: accessToken, token_type: 'Bearer', expires_in: 3600 })
+    const refreshToken = await new Promise<string>((resolve, reject) => {
+      jwt.sign(
+        { scopes: [] },
+        SECRET,
+        {
+          audience: APP_NAME,
+          issuer: APP_NAME,
+          expiresIn: '1d',
+          subject: `consumer:${consumer.id}`
+        },
+        (err, token) => {
+          if (err) return reject(err)
+          if (!token) return reject(new Error())
+          resolve(token)
+        }
+      )
+    })
+
+    res.json({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      token_type: 'Bearer',
+      expires_in: 600
+    })
+  }
+
+  /**
+ * POST /consumers/refresh-token
+ */
+  public async refreshToken(req: Request, res: Response) {
+    const refreshToken = req.body.refresh_token;
+
+    if (!refreshToken) return res.status(400).json({ message: 'Refresh token is required' });
+
+    try {
+      const decoded = jwt.verify(refreshToken, SECRET) as jwt.JwtPayload;
+
+      if (decoded.sub?.startsWith('consumer:')) {
+        const accessToken = await new Promise<string>((resolve, reject) => {
+          jwt.sign(
+            { scopes: [] },
+            SECRET,
+            {
+              audience: APP_NAME,
+              issuer: APP_NAME,
+              expiresIn: '1m',
+              subject: decoded.sub
+            },
+            (err, token) => {
+              if (err) return reject(err)
+              if (!token) return reject(new Error())
+              resolve(token)
+            }
+          )
+        })
+
+        return res.json({
+          access_token: accessToken,
+          token_type: 'Bearer',
+          expires_in: 600
+        });
+      } else {
+        return res.status(401).json({ message: 'Invalid refresh token' });
+      }
+    } catch (error) {
+      return res.status(401).json({ message: 'Invalid refresh token' });
+    }
   }
 
   /**
@@ -70,9 +134,9 @@ export class ConsumersController {
     const consumer = await this.repository.findOne({
       where: { id: req.params.consumerId }
     })
-    
+
     if (!consumer) return res.status(404).json({ message: `Not found Consumer with ID ${req.params.consumerId}` })
-    
+
     return res.json(consumer)
   }
 
@@ -83,7 +147,7 @@ export class ConsumersController {
     const consumer = await this.repository.findOne({
       where: { id: req.params.consumerId }
     })
-    
+
     if (!consumer) return res.status(404).json({ message: `Not found Consumer with ID ${req.params.consumerId}` })
 
     const filters: FindOptionsWhere<Conversation> = {}
@@ -91,7 +155,7 @@ export class ConsumersController {
     const [conversations, count] = await database.getRepository(Conversation).findAndCount({
       where: { ...filters, consumer: { id: consumer.id } }
     })
-    
+
     return res.json({ count, conversations })
   }
 
@@ -173,7 +237,7 @@ export class ConsumersController {
         const createdAt = new Date(message.createdAt)
 
         if (isNaN(createdAt.getTime())) throw new Error(`Bad Request: req.body.messages.${index}.createdAt must be a valid date`)
-        
+
         return database.getRepository(ConversationMessage).create({
           content: message.content,
           by: message.by as ConversationMessageBy,

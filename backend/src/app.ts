@@ -34,7 +34,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('sendMessage', (message) => {
-    const conversationId = message.conversationId; // Ajuste conforme sua estrutura de mensagem
+    const conversationId = message.conversationId;
     io.to(conversationId).emit('newMessage', message);
   });
 
@@ -68,6 +68,11 @@ app.put(
 app.post(
   '/consumers/sign-in',
   _catch((req, res) => singleton(ConsumersController).signIn(req, res))
+)
+
+app.post(
+  '/consumers/refresh-token',
+  _catch((req, res) => singleton(ConsumersController).refreshToken(req, res))
 )
 
 app.get(

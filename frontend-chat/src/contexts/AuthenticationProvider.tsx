@@ -9,6 +9,7 @@ export interface IAuthenticationContext {
   consumer: IConsumer | null
   isLoading: boolean
   signIn(document: string): void
+  refreshToken(refreshToken: string): void
 }
 
 export const AuthenticationContext = createContext(null as unknown as IAuthenticationContext)
@@ -51,6 +52,18 @@ export function AuthenticationProvider({ children }: PropsWithChildren) {
   const signInMutation = useMutation({
     mutationFn: (document: string) => api.post('/consumers/sign-in', { document }),
     onSuccess: response => {
+      const { access_token, refresh_token } = response.data
+
+      setAccessToken(access_token)
+
+      localStorage.setItem('session:access-token', access_token)
+      localStorage.setItem('session:refresh-token', refresh_token)
+    }
+  })
+
+  const refreshTokenMutation = useMutation({
+    mutationFn: (refreshToken: string) => api.post('/consumers/refresh-token', { refresh_token: refreshToken }),
+    onSuccess: response => {
       const { access_token } = response.data
 
       setAccessToken(access_token)
@@ -63,12 +76,16 @@ export function AuthenticationProvider({ children }: PropsWithChildren) {
     signInMutation.mutate(document)
   }, [signInMutation.mutate])
 
+  const refreshToken = useCallback((refreshToken: string) => {
+    refreshTokenMutation.mutate(refreshToken)
+  }, [refreshTokenMutation.mutate])
+
   const consumer = (query.data ?? null) as IConsumer | null
 
   const isLoading = useMemo(() => query.isLoading ?? signInMutation.isPending, [query.isLoading, signInMutation.isPending])
 
   return (
-    <AuthenticationContext.Provider value={{ accessToken, consumer, isLoading, signIn }}>
+    <AuthenticationContext.Provider value={{ accessToken, consumer, isLoading, signIn, refreshToken }}>
       {children}
     </AuthenticationContext.Provider>
   )
