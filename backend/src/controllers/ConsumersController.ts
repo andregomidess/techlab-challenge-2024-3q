@@ -16,12 +16,16 @@ export class ConsumersController {
    * GET /consumers
    */
   public async find(req: Request, res: Response) {
+
+    const page = parseInt(req.query.page as string) || 1
+    const limit = parseInt(req.query.limit as string) || 25
+
     const [consumers, count] = await this.repository.findAndCount({
-      take: 25,
-      skip: 0
+      take: limit,
+      skip: (page - 1) * limit
     })
 
-    res.json({ count, consumers })
+    res.json({ count, page, limit, consumers })
   }
 
   /**
@@ -47,7 +51,7 @@ export class ConsumersController {
         {
           audience: APP_NAME,
           issuer: APP_NAME,
-          expiresIn: '1m',
+          expiresIn: '10m',
           subject: `consumer:${consumer.id}`
         },
         (err, token) => {
@@ -103,7 +107,7 @@ export class ConsumersController {
             {
               audience: APP_NAME,
               issuer: APP_NAME,
-              expiresIn: '1m',
+              expiresIn: '10m',
               subject: decoded.sub
             },
             (err, token) => {

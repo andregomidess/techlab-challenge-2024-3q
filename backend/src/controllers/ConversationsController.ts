@@ -18,16 +18,20 @@ export class ConversationsController {
    */
   public async find(req: Request, res: Response) {
     const userId = req.token.sub.split(':')[1];
+
+    const page = parseInt(req.query.page as string) || 1
+    const limit = parseInt(req.query.limit as string) || 25
+
     const [conversations, count] = await this.repository.findAndCount({
       where: [
         { user: {id: userId} },
       ],
       relations: { consumer: true },
-      take: 25,
-      skip: 0
+      take: limit,
+      skip: (page - 1) * limit
     });
 
-    res.json({ count, conversations })
+    res.json({ count, page, limit, conversations })
   }
 
   /**
