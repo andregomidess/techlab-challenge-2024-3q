@@ -122,13 +122,13 @@ export function ConversationScreen() {
   const conversation = conversationQuery.data;
 
   return (
-    <Box display='flex' flexDirection='column' height='100vh' py={2}>
+    <Box display='flex' flexDirection='column' py={2}>
       <Box>
         <Typography variant='h5'>{conversation.subject}</Typography>
         {conversation.consumer.name && <Typography variant='subtitle1'>{conversation.consumer.name}</Typography>}
         <Typography variant='subtitle1'>{conversation.consumer.document}</Typography>
       </Box>
-      <Box maxHeight='80%' overflow='hidden scroll' ref={scrollRef}>
+      <Box height={'400px'} overflow='auto' ref={scrollRef}>
         <List>
           {messages.map((message) => (
             <ListItem key={`messages:${message.id}`}>
@@ -161,7 +161,7 @@ export function ConversationScreen() {
               variant="contained"
               style={{ padding: 16 }}
               startIcon={<CloseIcon />}
-              onClick={() => {close.mutate}}
+              onClick={() => {close.mutate()}}
             >
               Close
             </LoadingButton>

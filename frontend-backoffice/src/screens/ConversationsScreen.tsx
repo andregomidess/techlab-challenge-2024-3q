@@ -1,9 +1,11 @@
-import { Grid, CircularProgress, Box } from "@mui/material";
+import { Grid, CircularProgress, Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
 import { useAccessToken } from "../hooks/useAuthenticationContext.js";
 import { api } from "../services/api.js";
 import { ConversationItem } from "../components/ConversationItem.js";
 import { IConversation } from "../interfaces/IConversation.js";
 import { Outlet } from "react-router-dom";
+import InboxIcon from '@mui/icons-material/MoveToInbox';
+import MailIcon from '@mui/icons-material/Mail';
 import { useEffect, useRef, useCallback, Fragment } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 
@@ -65,23 +67,45 @@ export function ConversationsScreen() {
   }
 
   return (
-    <Grid container spacing={2} pl={0.1}>
-      <Grid item xs={2}>
-        <Grid container spacing={1}>
-          {data?.pages.map((page: any, pageIndex) => (
-            <Fragment key={pageIndex}>
-              {page.conversations.map((conversation :IConversation) => (
-                <Grid item key={`conversations:${conversation.id}`}>
-                  <ConversationItem conversation={conversation}/>
-                </Grid>
-              ))}
-            </Fragment>
-          ))}
+
+    // 
+    <Grid container spacing={0} sx={{ height: 'calc(100vh - 64px)' }}>
+      <Grid item xs={12} sm={3}>
+        <Grid >
+          <div style={{ position: 'relative', width: '100%' }}>
+            <Box sx={{ position: 'relative', width: '100%' }}>
+              <Drawer
+                sx={{
+                  position: 'absolute',
+                  width: 300,
+                  '& .MuiDrawer-paper': {
+                    position: 'relative',
+                    width: 300,
+                    height: '100vh',
+                    boxSizing: 'border-box',
+                  },
+                }}
+                variant="persistent"
+                anchor="left"
+                open
+              >
+                {data?.pages.map((page: any, pageIndex) => (
+                  <Fragment key={pageIndex}>
+                    {page.conversations.map((conversation: IConversation) => (
+                      <Grid item key={`conversations:${conversation.id}`}>
+                        <ConversationItem conversation={conversation} />
+                      </Grid>
+                    ))}
+                  </Fragment>
+                ))}
+              </Drawer>
+            </Box>
+          </div>
           <div ref={loadMoreRef} />
         </Grid>
         {isFetchingNextPage && <Box mt={2}><CircularProgress /></Box>}
       </Grid>
-      <Grid item xs={10}>
+      <Grid item xs={12} sm={9} sx={{ height: '100vh' }}>
         <Outlet />
       </Grid>
     </Grid>

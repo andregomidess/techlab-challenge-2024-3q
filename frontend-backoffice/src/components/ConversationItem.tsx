@@ -14,17 +14,53 @@ export function ConversationItem({ conversation }: ConversationItemProps) {
 
     return `Doc: ${conversation.consumer.document}`
   }, [conversation])
-
+ 
   return (
     <Paper>
-      <Typography variant="body1" gutterBottom>
-        <Link to={`/conversations/${conversation.id}`}>
-          <ListItem disablePadding>
-            <ListItemButton>
+      <Typography  >
+        <Link to={`/conversations/${conversation.id}`} style={{ textDecoration: 'none' }}>
+          <ListItem >
+            <ListItemButton
+               sx={{
+                borderRadius: '8px', // Adiciona um borderRadius de 8px
+                '&:focus': {
+                  backgroundColor: '#3390ec',
+                  color: 'white',
+                  '& .MuiListItemText-primary': {
+                    color: 'white',
+                  },
+                  '& .MuiListItemText-secondary': {
+                    color: 'white',
+                  },
+                  '& .MuiListItemIcon-root': {
+                    color: 'white',
+                  },
+                },
+                '&:active': {
+                  backgroundColor: ' #3390ec',
+                  color: 'white',
+                  '& .MuiListItemText-primary': {
+                    color: 'white',
+                  },
+                  '& .MuiListItemText-secondary': {
+                    color: 'white',
+                  },
+                  '& .MuiListItemIcon-root': {
+                    color: 'white',
+                  },
+                },
+              }}
+            >
               <ListItemIcon>
                 <ChatBubbleIcon />
               </ListItemIcon>
-              <ListItemText primary={conversation.subject} secondary={consumerIdentifier}/>
+              <ListItemText
+                primary={conversation.subject}
+                secondary={consumerIdentifier}
+                sx={{ textDecoration: 'none' }}
+                primaryTypographyProps={{ sx: { fontWeight: 'bold', color: 'black'} }}
+                secondaryTypographyProps={{ sx: { color: 'gray', textDecoration: 'none' } }}
+              />
             </ListItemButton>
           </ListItem>
         </Link>
