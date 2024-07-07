@@ -9,6 +9,7 @@ import { LoadingButton } from "@mui/lab";
 import SaveIcon from '@mui/icons-material/Save'
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import TitlePage from "../components/TitlePage";
 
 const updateUserSchema = z.object({
   username: z.string().min(1, 'O nome é obrigatório'),
@@ -90,7 +91,8 @@ export function UserScreen() {
   if (!user.data) return 'Carregando...'
 
   return (
-    <Box>
+    <Box p={4}>
+      <TitlePage title="Edição usuário"/>
       <Box>
         <TextField label="Username" {...register('username')} fullWidth />
       </Box>

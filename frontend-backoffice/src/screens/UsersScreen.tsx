@@ -4,6 +4,8 @@ import { useAccessToken } from "../hooks/useAuthenticationContext.js"
 import { IUser } from "../interfaces/IUser.js"
 import { Box, Typography } from "@mui/material"
 import { Link } from "react-router-dom"
+import TableUser from "../components/TableUser.js"
+import TitlePage from "../components/TitlePage.js"
 
 export function UsersScreen() {
   const accessToken = useAccessToken()
@@ -21,21 +23,14 @@ export function UsersScreen() {
     },
   })
 
-  const users = query.data?.users
+  const users = query.data?.users ?? []
 
   return (
-    <>
-      <Box>
-        {users?.map(user => (
-          <Link to={`/users/${user.id}`}>
-            <Box key={`users:${user.id}`}>
-              <Typography>
-                {user.username}
-              </Typography>
-            </Box>
-          </Link>
-        ))}
+    <Box p={3}>
+    <TitlePage title="Usuário"/>
+      <Box padding={'4rem'}>
+        <TableUser rows={users} />
       </Box>
-    </>
+    </Box>
   )
 }

@@ -5,9 +5,10 @@ import {
   ListItem,
   TextField,
   Typography,
+  makeStyles,
 } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../services/api";
 import { IConversation } from "../interfaces/IConversation";
 import { IConversationMessage } from "../interfaces/IConversationMessage";
@@ -16,7 +17,7 @@ import SendIcon from "@mui/icons-material/Send";
 import CloseIcon from "@mui/icons-material/Close";
 import { LoadingButton } from "@mui/lab";
 import { Socket, io } from "socket.io-client";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 
 interface IConversationMessageInput {
@@ -30,6 +31,8 @@ export function ConversationScreen() {
   const accessToken = useAccessToken();
   const socket = useRef<Socket | null>(null);
   const [messages, setMessages] = useState<IConversationMessage[]>([]);
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   if (!params.conversationId) throw new Error("No conversationId provided");
 
@@ -48,6 +51,10 @@ export function ConversationScreen() {
       await api.delete(`/conversations/${conversationId}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ["conversations"]});
+      navigate("/conversations");
     },
   });
 
@@ -189,14 +196,17 @@ export function ConversationScreen() {
             <LoadingButton
               loading={false}
               variant="contained"
-              style={{  borderRadius: '50%' }}
-              startIcon={<SendIcon
-                sx={{
+              style={{ borderRadius: "50%", height: "3.5rem", width: "3.5rem" }}
+              sx={{
+                borderRadius: "50%",
+                "& .MuiButton-startIcon": {
                   margin: 0,
-                  padding: '0 !important',
-                  fontSize: '1.75rem !important', 
-                }}
-                 />}
+                  "> svg": {
+                    fontSize: "1.75rem",
+                  },
+                },
+              }}
+              startIcon={<SendIcon />}
               onClick={() =>
                 handleSubmit({ content: form.getValues().content })
               }
