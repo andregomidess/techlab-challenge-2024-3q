@@ -2,13 +2,15 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "r
 import { AuthenticationContext } from "../contexts/AuthenticationProvider";
 import { IConversation } from "../interfaces/IConversation";
 import { LoadingButton } from "@mui/lab";
-import { Box, Typography, List, ListItem, Grid, TextField } from "@mui/material";
+import { Box, Typography, List, ListItem, Grid, TextField, FormControlLabel } from "@mui/material";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "../services/api";
 import { IConversationMessage } from "../interfaces/IConversationMessage";
 import { useForm } from "react-hook-form";
 import SendIcon from '@mui/icons-material/Send';
 import { Socket, io } from 'socket.io-client';
+import { useAppThemeContext } from "../contexts/ThemeContext";
+import { MaterialUISwitch } from "./MaterialUISwitch";
 
 export interface TemporaryConversationMessage {
   id: string;
@@ -25,6 +27,7 @@ export function Chat() {
   const scrollRef = useRef<HTMLElement>(null);
 
   const { consumer, isLoading, accessToken, signIn } = useContext(AuthenticationContext);
+  const { toggleTheme, theme } = useAppThemeContext();
 
   const socket = useRef<Socket | null>(null);
 
@@ -174,8 +177,12 @@ export function Chat() {
 
   return (
     <Box display='flex' flexDirection='column' height='100vh' py={2}>
-      <Box>
-        {/* Informação da conversa pode ser adicionada aqui */}
+       <Box display={'flex'} justifyContent={'end'}>
+        <FormControlLabel
+          control={<MaterialUISwitch sx={{ m: 1 }} theme={theme} />}
+          onChange={toggleTheme}
+          label="Alterar tema"
+        />
       </Box>
       <Box maxHeight='80%' overflow='hidden scroll' ref={scrollRef}>
         <List>
@@ -183,7 +190,7 @@ export function Chat() {
             <ListItem key={`messages:${message.id}`}>
               <Typography variant='body1'>{message.content}</Typography>
               <span style={{ width: 5 }}/>
-              <Typography variant='overline'>- {new Date(message.createdAt).toLocaleString()}</Typography>
+              <Typography variant='overline'>{new Date(message.createdAt).toLocaleString()}</Typography>
             </ListItem>
           ))}
         </List>

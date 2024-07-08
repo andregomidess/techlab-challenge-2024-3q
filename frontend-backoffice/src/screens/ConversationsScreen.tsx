@@ -1,11 +1,9 @@
-import { Grid, CircularProgress, Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
+import { Grid, CircularProgress, Box, Drawer } from "@mui/material";
 import { useAccessToken } from "../hooks/useAuthenticationContext.js";
 import { api } from "../services/api.js";
 import { ConversationItem } from "../components/ConversationItem.js";
 import { IConversation } from "../interfaces/IConversation.js";
 import { Outlet } from "react-router-dom";
-import InboxIcon from '@mui/icons-material/MoveToInbox';
-import MailIcon from '@mui/icons-material/Mail';
 import { useEffect, useRef, useCallback, Fragment } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 

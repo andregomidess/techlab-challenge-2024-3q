@@ -1,4 +1,4 @@
-import { createContext, PropsWithChildren, useMemo, useState } from "react";
+import { createContext, PropsWithChildren, useEffect, useMemo, useState } from "react";
 import { IUser } from "../interfaces/IUser.js";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "../services/api.js";
@@ -73,6 +73,19 @@ export function AuthenticationProvider({ children }: PropsWithChildren) {
   const isLoading = useMemo(() => userQuery.isLoading || signIn.isPending, [signIn.isPending, userQuery.isLoading])
 
   const value = useMemo(() => ({ token, accessToken, user, isLoading, signIn: signIn.mutate }), [token, accessToken, user, isLoading, signIn.mutate])
+
+  useEffect(() => {
+    api.interceptors.response.use(
+      response => response,
+      error => {
+        if (error.response && error.response.status === 401) {
+          localStorage.removeItem('token')
+          setAccessToken(null);
+        }
+        return Promise.reject(error);
+      }
+    );
+  })
 
   return (
     <AuthenticationContext.Provider value={value}>

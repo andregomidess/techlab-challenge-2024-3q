@@ -218,19 +218,19 @@ export function Dashboard() {
         </DrawerHeader>
         <Divider />
         <List>
-            <Link to='/conversations'>
+            <Link to='/conversations' style={{ textDecoration: 'none', color: 'black' }}>
               <ListItem disablePadding>
                 <ListItemButton>
                   <ListItemIcon>
                     <QuestionAnswerIcon />
                   </ListItemIcon>
-                  <ListItemText primary='Conversas' />
+                  <ListItemText  primary='Conversas' />
                 </ListItemButton>
               </ListItem>
             </Link>
             {useHasScope('users:*', 'users:read') && (
               <>
-                <Link to='/users'>
+                <Link to='/users' style={{ textDecoration: 'none', color: 'black' }}>
                   <ListItem disablePadding>
                     <ListItemButton>
                       <ListItemIcon>
@@ -240,20 +240,20 @@ export function Dashboard() {
                     </ListItemButton>
                   </ListItem>
                 </Link>
-                <Link to='/new-user'>
+                <Link to='/new-user' style={{ textDecoration: 'none', color: 'black' }}>
                   <ListItem disablePadding>
                     <ListItemButton>
                       <ListItemIcon>
                         <AddIcon />
                       </ListItemIcon>
-                      <ListItemText primary='Criar usuário' />
+                      <ListItemText  primary='Criar usuário' />
                     </ListItemButton>
                   </ListItem>
                 </Link>
               </>
             )}
             <Box>
-              <List component="nav">
+              <List component="nav" >
                 <ListItemButton onClick={toggleTheme}>
                   <ListItemIcon>
                     {themeName === 'light' ? <LightModeIcon /> : <DarkModeIcon />}

@@ -22,7 +22,7 @@ export function ConversationItem({ conversation }: ConversationItemProps) {
           <ListItem >
             <ListItemButton
                sx={{
-                borderRadius: '8px', // Adiciona um borderRadius de 8px
+                borderRadius: '8px', 
                 '&:focus': {
                   backgroundColor: '#3390ec',
                   color: 'white',

@@ -2,8 +2,7 @@ import { useQuery } from "@tanstack/react-query"
 import { api } from "../services/api.js"
 import { useAccessToken } from "../hooks/useAuthenticationContext.js"
 import { IUser } from "../interfaces/IUser.js"
-import { Box, Typography } from "@mui/material"
-import { Link } from "react-router-dom"
+import { Box } from "@mui/material"
 import TableUser from "../components/TableUser.js"
 import TitlePage from "../components/TitlePage.js"
 
@@ -28,8 +27,8 @@ export function UsersScreen() {
   return (
     <Box p={3}>
     <TitlePage title="Usuário"/>
-      <Box padding={'4rem'}>
-        <TableUser rows={users} />
+      <Box padding={'1rem 4rem 1rem 4rem'}>
+        <TableUser initialRows={users} accessToken={accessToken}/>
       </Box>
     </Box>
   )

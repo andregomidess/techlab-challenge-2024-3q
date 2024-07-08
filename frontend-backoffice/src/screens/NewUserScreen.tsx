@@ -1,4 +1,4 @@
-import { Box, MenuItem, Select, TextField, Typography } from "@mui/material";
+import { Alert, Box, IconButton, InputAdornment, MenuItem, Select, Snackbar, TextField, Typography } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -8,6 +8,9 @@ import { LoadingButton } from "@mui/lab";
 import SaveIcon from "@mui/icons-material/Save";
 import { zodResolver } from "@hookform/resolvers/zod";
 import TitlePage from "../components/TitlePage";
+import { useState } from "react";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 const newUserSchema = z
   .object({
@@ -26,6 +29,30 @@ type NewUserSchema = z.infer<typeof newUserSchema>;
 
 export function NewUserScreen() {
   const accessToken = useAccessToken();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  const handleClick = () => {
+    setOpen(true);
+  };
+
+  const handleClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setOpen(false);
+  };
+
+  const handleClickShowPassword = () => setShowPassword((show) => !show);
+  const handleClickShowConfirmPassword = () => setShowConfirmPassword((show) => !show);
+
+  const handleMouseDownPassword = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    event.preventDefault();
+  };
 
   const save = useMutation({
     mutationFn: async (user: NewUserSchema) => {
@@ -45,8 +72,21 @@ export function NewUserScreen() {
   return (
     <Box p={3}>
       <TitlePage title="Criar novo usuário"/>
+
+      <Snackbar open={open} autoHideDuration={6000} onClose={handleClose} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={handleClose}
+          severity="success"
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          Usuário criado com sucesso!
+        </Alert>
+      </Snackbar>
       <Box
-        
+        height={'70vh'}
+        overflow={'auto'}
         display={"flex"}
         alignItems={"center"}
         flexDirection={"column"}
@@ -57,30 +97,58 @@ export function NewUserScreen() {
             {...register("username")}
             fullWidth
           />
-          {errors.username && <span>{errors.username.message}</span>}
+          {errors.username && <span style={{color: 'red', fontSize: '.75rem'}}>{errors.username.message}</span>}
         </Box>
         <Box marginBottom={"1rem"} width={"30rem"}>
           <TextField label="E-mail" {...register("email")} fullWidth />
-          {errors.email && <span>{errors.email.message}</span>}
+          {errors.email && <span style={{color: 'red', fontSize: '.75rem'}}>{errors.email.message}</span>}
         </Box>
         <Box marginBottom={"1rem"} width={"30rem"}>
           <TextField
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={handleClickShowPassword}
+                    onMouseDown={handleMouseDownPassword}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
             label="Senha"
             {...register("password")}
             type="password"
             fullWidth
           />
-          {errors.password && <span>{errors.password.message}</span>}
+          {errors.password && <span style={{color: 'red', fontSize: '.75rem'}}>{errors.password.message}</span>}
         </Box>
         <Box marginBottom={"1rem"} width={"30rem"}>
           <TextField
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={handleClickShowConfirmPassword}
+                    onMouseDown={handleMouseDownPassword}
+                    edge="end"
+                  >
+                    {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
             label="Confirmar senha"
             {...register("confirmPassword")}
             type="password"
             fullWidth
           />
           {errors.confirmPassword && (
-            <span>{errors.confirmPassword.message}</span>
+            <span style={{color: 'red', fontSize: '.75rem'}}>{errors.confirmPassword.message}</span>
           )}
         </Box>
         <Box marginBottom={"1rem"} width={"30rem"}>
@@ -88,7 +156,7 @@ export function NewUserScreen() {
             <MenuItem value="standard">Standard</MenuItem>
             <MenuItem value="sudo">Sudo</MenuItem>
           </Select>
-          {errors.profile && <span>{errors.profile.message}</span>}
+          {errors.profile && <span style={{color: 'red', fontSize: '.75rem'}}>{errors.profile.message}</span>}
         </Box>
         <Box>
           <LoadingButton

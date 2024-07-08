@@ -5,7 +5,6 @@ import {
   ListItem,
   TextField,
   Typography,
-  makeStyles,
 } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -19,6 +18,7 @@ import { LoadingButton } from "@mui/lab";
 import { Socket, io } from "socket.io-client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
+import { useAppThemeContext } from "../contexts/ThemeContext";
 
 interface IConversationMessageInput {
   content: string;
@@ -33,6 +33,8 @@ export function ConversationScreen() {
   const [messages, setMessages] = useState<IConversationMessage[]>([]);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { theme } = useAppThemeContext();
+
 
   if (!params.conversationId) throw new Error("No conversationId provided");
 
@@ -53,7 +55,7 @@ export function ConversationScreen() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({queryKey: ["conversations"]});
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
       navigate("/conversations");
     },
   });
@@ -151,7 +153,7 @@ export function ConversationScreen() {
 
   return (
     <Box display="flex" alignItems={"center"} flexDirection="column" py={2}>
-      <Box width={"100%"}>
+      <Box width={"100%"} >
         <Typography variant="h5">{conversation.subject}</Typography>
         {conversation.consumer.name && (
           <Typography variant="subtitle1">
@@ -163,17 +165,35 @@ export function ConversationScreen() {
         </Typography>
       </Box>
       <Box height={"400px"} width={"100%"} overflow="auto" ref={scrollRef}>
-        <List>
-          {messages.map((message) => (
-            <ListItem key={`messages:${message.id}`}>
-              <Typography variant="body1">{message.content}</Typography>
-              <span style={{ width: 5 }} />
-              <Typography variant="overline">
-                - {new Date(message.createdAt).toLocaleString()}
-              </Typography>
-            </ListItem>
-          ))}
-        </List>
+      <List>
+  {messages.map((message) => (
+    <ListItem
+      key={`messages:${message.id}`}
+      sx={{
+        justifyContent: message.by === 'user' ? 'flex-end' : 'flex-start',
+      }}
+    >
+      <Box
+        sx={{
+          backgroundColor:
+            message.by === 'user'
+              ? theme.palette.primary.light
+              : theme.palette.background.paper,
+          borderRadius: '10px',
+          padding: '8px',
+          maxWidth: '60%',
+          wordBreak: 'break-word',
+          color: theme.palette.text.primary,
+        }}
+      >
+        <Typography variant="body1">{message.content}</Typography>
+        <Typography variant="overline">
+          {new Date(message.createdAt).toLocaleString()}
+        </Typography>
+      </Box>
+    </ListItem>
+  ))}
+</List>
       </Box>
       <Box mt="auto" width={"100%"}>
         <Grid container display={"flex"} justifyContent={"center"}>
@@ -196,7 +216,11 @@ export function ConversationScreen() {
             <LoadingButton
               loading={false}
               variant="contained"
-              style={{ borderRadius: "50%", height: "3.5rem", width: "3.5rem" }}
+              style={{
+                borderRadius: "50%",
+                height: "3.5rem",
+                width: "3.5rem",
+              }}
               sx={{
                 borderRadius: "50%",
                 "& .MuiButton-startIcon": {
