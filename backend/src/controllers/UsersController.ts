@@ -98,25 +98,29 @@ export class UsersController {
   /**
    * PATCH /users/:user-id
    */
-  public async update(req: Request<{ userId: string }>, res: Response) {
+  public async update(req: Request, res: Response) {
     const user = await this.repository.findOne({
       where: { id: req.params.userId }
     })
 
     if (!user) return res.status(404).json({ message: `Not found User with ID ${req.params.userId}` })
 
-    const emailExist = await this.repository.findOne({where: {email: req.body.email}})
+    if (req.body.email){
+      const emailExist = await this.repository.findOne({where: {email: req.body.email}})
 
-    if (emailExist && emailExist.email !== user.email){
-      return res.status(400).json({ message: `Email addres already used.` })
+      if (emailExist && emailExist.email !== user.email){
+        return res.status(400).json({ message: `Email addres already used.` })
+      }
     }
     
-    const usernameExist = await this.repository.findOne({ where: {username: req.body.username} })
+    if (req.body.username) {
+      const usernameExist = await this.repository.findOne({ where: {username: req.body.username} })
     
-    if (usernameExist && usernameExist.username !== user.username){
-      return res.status(400).json({ message: `Username already used.` })
+      if (usernameExist && usernameExist.username !== user.username){
+        return res.status(400).json({ message: `Username already used.` })
+      }
     }
-
+    
     if (req.body.password) {
       const { password, confirmPassword, ...rest } = req.body;
       const hashedPassword = await this.hashProvider.generateHash(password);

@@ -50,7 +50,7 @@ export class AuthenticationController {
         {
           audience: APP_NAME,
           issuer: APP_NAME,
-          expiresIn: '1h',
+          expiresIn: '12h',
           subject: `user:${user.id}`
         },
         (err, token) => {
@@ -63,6 +63,6 @@ export class AuthenticationController {
       )
     })
 
-    res.json({ access_token: accessToken, token_type: 'Bearer', expires_in: 3600 })
+    res.json({ access_token: accessToken, token_type: 'Bearer', expires_in: 43200 })
   }
 }
