@@ -12,5 +12,3 @@ export const decodeJsonWebToken = (token: string): any => {
 
   return JSON.parse(json)
 };
-
-//teste
